@@ -1,0 +1,66 @@
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { PinoLogger } from 'nestjs-pino';
+import { Wallet, WalletDocument } from '../wallet/wallet.schema';
+import { TRANSACTION_TYPE } from './transaction.constants';
+import { Transaction, TransactionDocument } from './transaction.schema';
+
+@Injectable()
+export class TransactionService {
+  constructor(
+    @InjectModel(Wallet.name) private walletModel: Model<WalletDocument>,
+    @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>,
+    private readonly logger: PinoLogger
+  ) {
+    logger.setContext(TransactionService.name);
+   }
+
+  async transact(walletId: string, amount: number, description: string, type: TRANSACTION_TYPE): Promise<Transaction> {
+    const session = await this.walletModel.startSession();
+    session.startTransaction();
+
+    try {
+      const wallet = await this.walletModel.findById(walletId).session(session).exec();
+
+      if (!wallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+
+      const balance = type == TRANSACTION_TYPE.CREDIT ? (wallet.balance + amount).toFixed(4) : (wallet.balance - amount).toFixed(4)
+      
+
+      const transaction = new this.transactionModel({ 
+        walletId,
+        amount,
+        balance,
+        description,
+        type,
+      });
+
+      await transaction.save({ session });
+
+      await this.walletModel.findByIdAndUpdate(walletId, { balance: balance }, { session }).exec();
+
+      await session.commitTransaction();
+      return transaction;
+    } catch (error) {
+      await session.abortTransaction();
+      this.logger.error(error);
+      // Handle any errors that may occur during the transaction process
+      throw error;
+    } finally {
+      session.endSession();
+      // add log
+    }
+  }
+
+  async getTransactions(walletId: string, skip: number, limit: number): Promise<Transaction[]> {
+    return this.transactionModel
+      .find({ walletId })
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+  }
+}
