@@ -27,9 +27,10 @@ export class TransactionService {
         throw new NotFoundException('Wallet not found');
       }
 
-      const balance = type == TRANSACTION_TYPE.CREDIT ? (wallet.balance + amount).toFixed(4) : (wallet.balance - amount).toFixed(4)
-      
+      amount = (type == TRANSACTION_TYPE.CREDIT ? Math.abs(amount) : -Math.abs(amount));
 
+      const balance = (wallet.balance + amount)
+      console.log(balance, amount, wallet.balance, walletId);
       const transaction = new this.transactionModel({ 
         walletId,
         amount,
@@ -37,11 +38,11 @@ export class TransactionService {
         description,
         type,
       });
-
+      
       await transaction.save({ session });
 
-      await this.walletModel.findByIdAndUpdate(walletId, { balance: balance }, { session }).exec();
-
+      const result = await this.walletModel.findByIdAndUpdate(walletId, { $inc: { balance : amount } }, { session }).exec();
+      console.log(result);
       await session.commitTransaction();
       return transaction;
     } catch (error) {
