@@ -35,12 +35,6 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
-  // const corsOptions: CorsOptions = {
-  //   origin: ["*"],
-  //   methods: "GET,POST",
-  //   preflightContinue: false,
-  // };
-
   app.enableCors({});
 
   app.use(helmet());
