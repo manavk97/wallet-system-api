@@ -30,7 +30,6 @@ export class TransactionService {
       amount = (type == TRANSACTION_TYPE.CREDIT ? Math.abs(amount) : -Math.abs(amount));
 
       const balance = (wallet.balance + amount)
-      console.log(balance, amount, wallet.balance, walletId);
       const transaction = new this.transactionModel({ 
         walletId,
         amount,
@@ -42,7 +41,6 @@ export class TransactionService {
       await transaction.save({ session });
 
       const result = await this.walletModel.findByIdAndUpdate(walletId, { $inc: { balance : amount } }, { session }).exec();
-      console.log(result);
       await session.commitTransaction();
       return transaction;
     } catch (error) {

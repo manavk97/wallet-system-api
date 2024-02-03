@@ -29,3 +29,10 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+### API ENDPOINT
+
+```
+URL: http://3.95.0.99:3001
+
+```
