@@ -36,3 +36,7 @@ $ npm run test:cov
 URL: http://3.95.0.99:3001
 
 ```
+### API DOCUMENTATION
+```
+API DOCUMENTATION: https://documenter.getpostman.com/view/21317033/2s9YyvC1eG
+```
